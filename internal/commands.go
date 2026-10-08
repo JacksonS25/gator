@@ -1,11 +1,18 @@
 package internal
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"time"
+
+	"github.com/JacksonS25/gator/internal/database"
+	"github.com/google/uuid"
 )
 
 type State struct {
 	Config *Config
+	Db     *database.Queries
 }
 
 type Command struct {
@@ -33,10 +40,50 @@ func HandlerLogin(s *State, cmd Command) error {
 	if len(cmd.Args) < 1 {
 		return fmt.Errorf("usage: login <username>")
 	}
+	_, err := s.Db.GetUser(context.Background(), cmd.Args[0])
+	if err != nil {
+		fmt.Printf("error logging in user: %v\n", err)
+		os.Exit(1)
+	}
 
 	SetUser(*s.Config, cmd.Args[0])
 
 	fmt.Println("User has been set: ", cmd.Args[0])
 
+	return nil
+}
+
+func HandlerRegister(s *State, cmd Command) error {
+	if len(cmd.Args) < 1 {
+		return fmt.Errorf("usage: register <username>")
+	}
+
+	userParams := database.CreateUserParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      cmd.Args[0],
+	}
+
+	user, err := s.Db.CreateUser(context.Background(), userParams)
+	if err != nil {
+		fmt.Printf("error creating user: %v\n", err)
+		os.Exit(1)
+	}
+
+	SetUser(*s.Config, cmd.Args[0])
+	fmt.Println("User has been registered: ", cmd.Args[0])
+	fmt.Println(user)
+	return nil
+}
+
+func HandlerReset(s *State, cmd Command) error {
+	err := s.Db.ResetUsers(context.Background())
+	if err != nil {
+		fmt.Printf("error resetting users: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("All users have been reset.")
 	return nil
 }

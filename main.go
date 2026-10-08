@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/JacksonS25/gator/internal"
+	"github.com/JacksonS25/gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -13,8 +16,18 @@ func main() {
 		fmt.Println("Error reading config:", err)
 	}
 
+	db, err := sql.Open("postgres", cfg.DbURL)
+	if err != nil {
+		fmt.Println("Error connecting to database:", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	dbQueries := database.New(db)
+
 	state := internal.State{
 		Config: &cfg,
+		Db:     dbQueries,
 	}
 
 	commands := internal.Commands{
@@ -22,6 +35,8 @@ func main() {
 	}
 
 	commands.Register("login", internal.HandlerLogin)
+	commands.Register("register", internal.HandlerRegister)
+	commands.Register("reset", internal.HandlerReset)
 
 	args := os.Args
 
