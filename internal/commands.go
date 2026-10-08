@@ -87,3 +87,21 @@ func HandlerReset(s *State, cmd Command) error {
 	fmt.Println("All users have been reset.")
 	return nil
 }
+
+func HandlerUsers(s *State, cmd Command) error {
+	users, err := s.Db.GetUsers(context.Background())
+	if err != nil {
+		fmt.Printf("error getting users: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Users:")
+	for _, user := range users {
+		if user.Name == s.Config.CurrentUserName {
+			fmt.Printf("* %s (current)\n", user.Name)
+			continue
+		}
+		fmt.Printf("* %s\n", user.Name)
+	}
+	return nil
+}
