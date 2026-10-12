@@ -47,6 +47,7 @@ func main() {
 	commands.Register("users", internal.HandlerUsers)
 	commands.Register("agg", internal.HandlerAgg)
 	commands.Register("addfeed", internal.HandlerAddFeed)
+	commands.Register("feeds", internal.HandlerFeeds)
 
 	command := internal.Command{
 		Name: args[1],

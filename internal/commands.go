@@ -113,7 +113,16 @@ func HandlerAgg(s *State, cmd Command) error {
 		os.Exit(1)
 	}
 
-	fmt.Println(feed)
+	fmt.Println(feed.Channel.Title)
+	fmt.Println(feed.Channel.Link)
+	fmt.Println(feed.Channel.Description)
+	for _, item := range feed.Channel.Item {
+		fmt.Println("Title:", item.Title)
+		fmt.Println("Link:", item.Link)
+		fmt.Println("Description:", item.Description)
+		fmt.Println("PubDate:", item.PubDate)
+		fmt.Println()
+	}
 	return nil
 }
 
@@ -144,5 +153,24 @@ func HandlerAddFeed(s *State, cmd Command) error {
 	}
 
 	fmt.Println("Feed has been added: ", feed.Name)
+	return nil
+}
+
+func HandlerFeeds(s *State, cmd Command) error {
+	feeds, err := s.Db.Feeds(context.Background())
+	if err != nil {
+		fmt.Printf("error getting feeds: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Feeds:")
+	for _, feed := range feeds {
+		user, err := s.Db.GetUserById(context.Background(), feed.UserID)
+		if err != nil {
+			fmt.Printf("error getting user: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("* %s (%s): %s\n", feed.Name, feed.Url, user.Name)
+	}
 	return nil
 }
