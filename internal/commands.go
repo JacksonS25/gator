@@ -153,6 +153,12 @@ func HandlerAddFeed(s *State, cmd Command) error {
 	}
 
 	fmt.Println("Feed has been added: ", feed.Name)
+	cmd.Args = cmd.Args[1:]
+	err = HandlerFollow(s, cmd)
+	if err != nil {
+		fmt.Printf("error following feed: %v\n", err)
+		os.Exit(1)
+	}
 	return nil
 }
 
@@ -171,6 +177,68 @@ func HandlerFeeds(s *State, cmd Command) error {
 			os.Exit(1)
 		}
 		fmt.Printf("* %s (%s): %s\n", feed.Name, feed.Url, user.Name)
+	}
+	return nil
+}
+
+func HandlerFollow(s *State, cmd Command) error {
+	if len(cmd.Args) < 1 {
+		return fmt.Errorf("usage: follow <feed_url>")
+	}
+
+	currentUser, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
+	if err != nil {
+		fmt.Printf("error getting current user: %v\n", err)
+		os.Exit(1)
+	}
+
+	feed, err := s.Db.GetFeedByUrl(context.Background(), cmd.Args[0])
+	if err != nil {
+		fmt.Printf("error getting feed: %v\n", err)
+		os.Exit(1)
+	}
+
+	feedFollowParams := database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    currentUser.ID,
+		FeedID:    feed.ID,
+	}
+	_, err = s.Db.CreateFeedFollow(context.Background(), feedFollowParams)
+	if err != nil {
+		fmt.Printf("error following feed: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("User %s is now following feed %s\n", currentUser.Name, feed.Name)
+	return nil
+}
+
+func HandlerFollowing(s *State, cmd Command) error {
+	currentUser, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
+	if err != nil {
+		fmt.Printf("error getting current user: %v\n", err)
+		os.Exit(1)
+	}
+
+	following, err := s.Db.GetFeedFollowForUser(context.Background(), currentUser.ID)
+	if err != nil {
+		fmt.Printf("error getting following feeds: %v\n", err)
+		os.Exit(1)
+	}
+
+	feeds := []string{}
+	for _, feedFollow := range following {
+		feed, err := s.Db.GetFeedById(context.Background(), feedFollow.FeedID)
+		if err != nil {
+			fmt.Printf("error getting feed: %v\n", err)
+			os.Exit(1)
+		}
+		feeds = append(feeds, feed.Name)
+	}
+	for _, feed := range feeds {
+		fmt.Printf("* %s\n", feed)
 	}
 	return nil
 }

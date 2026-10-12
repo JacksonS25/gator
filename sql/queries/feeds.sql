@@ -16,3 +16,21 @@ SELECT
     url,
     user_id
 FROM feeds;
+
+-- name: GetFeedByUrl :one
+SELECT
+    id,
+    name,
+    url,
+    user_id
+FROM feeds
+WHERE url = $1;
+
+-- name: GetFeedById :one
+SELECT
+    id,
+    name,
+    url,
+    user_id
+FROM feeds
+WHERE id = $1;

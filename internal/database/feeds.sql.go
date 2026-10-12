@@ -91,3 +91,61 @@ func (q *Queries) Feeds(ctx context.Context) ([]FeedsRow, error) {
 	}
 	return items, nil
 }
+
+const getFeedById = `-- name: GetFeedById :one
+SELECT
+    id,
+    name,
+    url,
+    user_id
+FROM feeds
+WHERE id = $1
+`
+
+type GetFeedByIdRow struct {
+	ID     uuid.UUID
+	Name   string
+	Url    string
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetFeedById(ctx context.Context, id uuid.UUID) (GetFeedByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getFeedById, id)
+	var i GetFeedByIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Url,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getFeedByUrl = `-- name: GetFeedByUrl :one
+SELECT
+    id,
+    name,
+    url,
+    user_id
+FROM feeds
+WHERE url = $1
+`
+
+type GetFeedByUrlRow struct {
+	ID     uuid.UUID
+	Name   string
+	Url    string
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetFeedByUrl(ctx context.Context, url string) (GetFeedByUrlRow, error) {
+	row := q.db.QueryRowContext(ctx, getFeedByUrl, url)
+	var i GetFeedByUrlRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Url,
+		&i.UserID,
+	)
+	return i, err
+}
