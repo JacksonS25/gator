@@ -105,3 +105,14 @@ func HandlerUsers(s *State, cmd Command) error {
 	}
 	return nil
 }
+
+func HandlerAgg(s *State, cmd Command) error {
+	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		fmt.Printf("error fetching feed: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(feed)
+	return nil
+}
