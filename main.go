@@ -11,6 +11,13 @@ import (
 )
 
 func main() {
+	args := os.Args
+
+	if len(args) < 2 {
+		fmt.Println("Type the command, not enought arguements provided.")
+		os.Exit(1)
+	}
+
 	cfg, err := internal.Read()
 	if err != nil {
 		fmt.Println("Error reading config:", err)
@@ -39,13 +46,7 @@ func main() {
 	commands.Register("reset", internal.HandlerReset)
 	commands.Register("users", internal.HandlerUsers)
 	commands.Register("agg", internal.HandlerAgg)
-
-	args := os.Args
-
-	if len(args) < 2 {
-		fmt.Println("Type the command, not enought arguements provided.")
-		os.Exit(1)
-	}
+	commands.Register("addfeed", internal.HandlerAddFeed)
 
 	command := internal.Command{
 		Name: args[1],
