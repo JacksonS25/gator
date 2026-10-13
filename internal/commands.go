@@ -126,15 +126,9 @@ func HandlerAgg(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerAddFeed(s *State, cmd Command) error {
+func HandlerAddFeed(s *State, cmd Command, user database.User) error {
 	if len(cmd.Args) < 2 {
 		return fmt.Errorf("usage: addfeed <name> <url>")
-	}
-
-	currentUser, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
-	if err != nil {
-		fmt.Printf("error getting current user: %v\n", err)
-		os.Exit(1)
 	}
 
 	feedParams := database.AddFeedParams{
@@ -143,7 +137,7 @@ func HandlerAddFeed(s *State, cmd Command) error {
 		UpdatedAt: time.Now(),
 		Name:      cmd.Args[0],
 		Url:       cmd.Args[1],
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
 	}
 
 	feed, err := s.Db.AddFeed(context.Background(), feedParams)
@@ -154,7 +148,7 @@ func HandlerAddFeed(s *State, cmd Command) error {
 
 	fmt.Println("Feed has been added: ", feed.Name)
 	cmd.Args = cmd.Args[1:]
-	err = HandlerFollow(s, cmd)
+	err = HandlerFollow(s, cmd, user)
 	if err != nil {
 		fmt.Printf("error following feed: %v\n", err)
 		os.Exit(1)
@@ -181,15 +175,9 @@ func HandlerFeeds(s *State, cmd Command) error {
 	return nil
 }
 
-func HandlerFollow(s *State, cmd Command) error {
+func HandlerFollow(s *State, cmd Command, user database.User) error {
 	if len(cmd.Args) < 1 {
 		return fmt.Errorf("usage: follow <feed_url>")
-	}
-
-	currentUser, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
-	if err != nil {
-		fmt.Printf("error getting current user: %v\n", err)
-		os.Exit(1)
 	}
 
 	feed, err := s.Db.GetFeedByUrl(context.Background(), cmd.Args[0])
@@ -202,7 +190,7 @@ func HandlerFollow(s *State, cmd Command) error {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
 		FeedID:    feed.ID,
 	}
 	_, err = s.Db.CreateFeedFollow(context.Background(), feedFollowParams)
@@ -211,18 +199,13 @@ func HandlerFollow(s *State, cmd Command) error {
 		os.Exit(1)
 	}
 
-	fmt.Printf("User %s is now following feed %s\n", currentUser.Name, feed.Name)
+	fmt.Printf("User %s is now following feed %s\n", user.Name, feed.Name)
 	return nil
 }
 
-func HandlerFollowing(s *State, cmd Command) error {
-	currentUser, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
-	if err != nil {
-		fmt.Printf("error getting current user: %v\n", err)
-		os.Exit(1)
-	}
+func HandlerFollowing(s *State, cmd Command, user database.User) error {
 
-	following, err := s.Db.GetFeedFollowForUser(context.Background(), currentUser.ID)
+	following, err := s.Db.GetFeedFollowForUser(context.Background(), user.ID)
 	if err != nil {
 		fmt.Printf("error getting following feeds: %v\n", err)
 		os.Exit(1)

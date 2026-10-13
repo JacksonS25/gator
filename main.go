@@ -46,10 +46,10 @@ func main() {
 	commands.Register("reset", internal.HandlerReset)
 	commands.Register("users", internal.HandlerUsers)
 	commands.Register("agg", internal.HandlerAgg)
-	commands.Register("addfeed", internal.HandlerAddFeed)
+	commands.Register("addfeed", internal.MiddlewareLoggedIn(internal.HandlerAddFeed))
 	commands.Register("feeds", internal.HandlerFeeds)
-	commands.Register("follow", internal.HandlerFollow)
-	commands.Register("following", internal.HandlerFollowing)
+	commands.Register("follow", internal.MiddlewareLoggedIn(internal.HandlerFollow))
+	commands.Register("following", internal.MiddlewareLoggedIn(internal.HandlerFollowing))
 
 	command := internal.Command{
 		Name: args[1],
