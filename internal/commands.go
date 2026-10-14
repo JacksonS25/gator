@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/JacksonS25/gator/internal/database"
@@ -276,10 +278,58 @@ func scrapeFeeds(s *State) error {
 		os.Exit(1)
 	}
 
-	fmt.Println("Fetched feed: ", fetchedFeed.Channel.Title)
+	fmt.Println("Fetched Feed: ", fetchedFeed.Channel.Title)
 
 	for _, item := range fetchedFeed.Channel.Item {
-		fmt.Println("Title: ", item.Title)
+		pubDate, _ := time.Parse(time.RFC1123, item.PubDate)
+
+		postParams := database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			Title:       item.Title,
+			Url:         item.Link,
+			Description: item.Description,
+			PublishedAt: pubDate,
+			FeedID:      feed.ID,
+		}
+
+		_, err := s.Db.CreatePost(context.Background(), postParams)
+
+		if err != nil && !strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			fmt.Printf("error creating post: %v\n", err)
+		}
+	}
+	return nil
+}
+
+func HandlerBrowse(s *State, cmd Command, user database.User) error {
+	var limit int32 = 2
+	if len(cmd.Args) >= 1 {
+		parsedLimit, err := strconv.Atoi(cmd.Args[0])
+		if err != nil {
+			fmt.Printf("error parsing number: %v\n", err)
+			limit = 2
+		} else {
+			limit = int32(parsedLimit)
+		}
+	}
+
+	getPostsParams := database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  limit,
+	}
+
+	posts, err := s.Db.GetPostsForUser(context.Background(), getPostsParams)
+	if err != nil {
+		fmt.Printf("error getting posts: %v\n", err)
+		os.Exit(1)
+	}
+
+	for _, post := range posts {
+		fmt.Println("Title: ", post.Title)
+		fmt.Println("Published At: ", post.PublishedAt)
+		fmt.Println("Description: ", post.Description)
 	}
 	return nil
 }
